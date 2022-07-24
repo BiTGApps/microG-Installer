@@ -1,0 +1,42 @@
+name: microG Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+       - name: Initial Setup
+         uses: actions/checkout@v2
+
+       - name: Create microG
+         run: |
+           rm -rf microG
+           mkdir microG
+
+       - name: Clone Build Sources
+         run: |
+           git clone https://github.com/BiTGApps/microG-Installer microG
+
+       - name: Create Sources
+         run: |
+           mkdir microG/sources
+
+       - name: Clone Package Sources
+         run: |
+           git clone https://github.com/BiTGApps/microG-sources microG/sources/microG-sources
+
+       - name: Build microG Package
+         run: |
+           cd microG
+           . scripts/envsetup.sh && rm -rf scripts
+           zip -qr9 MicroG-v1.0.zip * && cd ..
+           mkdir out && cp -f microG/MicroG-v1.0.zip out
+
+       - name: Upload Build Artifact
+         uses: actions/upload-artifact@v2
+         with:
+           name: microG-Build
+           path: out/MicroG-v1.0.zip
