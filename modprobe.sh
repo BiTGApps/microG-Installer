@@ -26,3 +26,6 @@ rm -rf /data/data/com.google.android*
 for i in MicroGGMSCore; do
   mv -f /system/priv-app/$i/$i.apk /system/priv-app/$i/$i.dpk
 done
+
+# Purge runtime permissions
+rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
