@@ -264,9 +264,6 @@ mount_all() {
   fi
   $SYSTEM_ROOT && ui_print "- Device is system-as-root"
   $SUPER_PARTITION && ui_print "- Super partition detected"
-  # Set recovery fstab
-  [ -f "/etc/fstab" ] && cp -f '/etc/fstab' $TMP && fstab="/tmp/fstab"
-  [ -f "/system/etc/fstab" ] && cp -f '/system/etc/fstab' $TMP && fstab="/tmp/fstab"
   # Check A/B slot
   [ "$slot" ] || slot=$(getprop ro.boot.slot_suffix 2>/dev/null)
   [ "$slot" ] || slot=`grep_cmdline androidboot.slot_suffix`
@@ -281,38 +278,13 @@ mount_all() {
     done
     ui_print "- Mounting /system"
     mount -o ro -t auto /dev/block/mapper/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    mount -o rw,remount -t auto /dev/block/mapper/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    if ! is_mounted $ANDROID_ROOT; then
-      if [ "$(grep -w -o '/system_root' $fstab)" ]; then
-        BLOCK=`grep -v '#' $fstab | grep -E '/system_root' | grep -oE '/dev/block/dm-[0-9]' | head -n 1`
-      fi
-      if [ "$(grep -w -o '/system' $fstab)" ]; then
-        BLOCK=`grep -v '#' $fstab | grep -E '/system' | grep -oE '/dev/block/dm-[0-9]' | head -n 1`
-      fi
-      mount -o ro -t auto $BLOCK $ANDROID_ROOT > /dev/null 2>&1
-      mount -o rw,remount -t auto $BLOCK $ANDROID_ROOT > /dev/null 2>&1
-    fi
-    is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
-    if [ "$(grep -w -o '/product' $fstab)" ]; then
-      ui_print "- Mounting /product"
-      mount -o ro -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
-      mount -o rw,remount -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
-      if ! is_mounted /product; then
-        BLOCK=`grep -v '#' $fstab | grep -E '/product' | grep -oE '/dev/block/dm-[0-9]' | head -n 1`
-        mount -o ro -t auto $BLOCK /product > /dev/null 2>&1
-        mount -o rw,remount -t auto $BLOCK /product > /dev/null 2>&1
-      fi
-    fi
-    if [ "$(grep -w -o '/system_ext' $fstab)" ]; then
-      ui_print "- Mounting /system_ext"
-      mount -o ro -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
-      mount -o rw,remount -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
-      if ! is_mounted /system_ext; then
-        BLOCK=`grep -v '#' $fstab | grep -E '/system_ext' | grep -oE '/dev/block/dm-[0-9]' | head -n 1`
-        mount -o ro -t auto $BLOCK /system_ext > /dev/null 2>&1
-        mount -o rw,remount -t auto $BLOCK /system_ext > /dev/null 2>&1
-      fi
-    fi
+    mount -o remount,rw -t auto /dev/block/mapper/system$slot $ANDROID_ROOT > /dev/null 2>&1
+    ui_print "- Mounting /product"
+    mount -o ro -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
+    mount -o remount,rw -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
+    ui_print "- Mounting /system_ext"
+    mount -o ro -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
+    mount -o remount,rw -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
   fi
   if [ "$SUPER_PARTITION" = "true" ] && [ "$device_abpartition" = "false" ]; then
     unset ANDROID_ROOT && ANDROID_ROOT="/system_root" && setup_mountpoint $ANDROID_ROOT
@@ -321,56 +293,43 @@ mount_all() {
     done
     ui_print "- Mounting /system"
     mount -o ro -t auto /dev/block/mapper/system $ANDROID_ROOT > /dev/null 2>&1
-    mount -o rw,remount -t auto /dev/block/mapper/system $ANDROID_ROOT > /dev/null 2>&1
-    is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
-    if [ "$(grep -w -o '/product' $fstab)" ]; then
-      ui_print "- Mounting /product"
-      mount -o ro -t auto /dev/block/mapper/product /product > /dev/null 2>&1
-      mount -o rw,remount -t auto /dev/block/mapper/product /product > /dev/null 2>&1
-    fi
-    if [ "$(grep -w -o '/system_ext' $fstab)" ]; then
-      ui_print "- Mounting /system_ext"
-      mount -o ro -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
-      mount -o rw,remount -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
-    fi
+    mount -o remount,rw -t auto /dev/block/mapper/system $ANDROID_ROOT > /dev/null 2>&1
+    ui_print "- Mounting /product"
+    mount -o ro -t auto /dev/block/mapper/product /product > /dev/null 2>&1
+    mount -o remount,rw -t auto /dev/block/mapper/product /product > /dev/null 2>&1
+    ui_print "- Mounting /system_ext"
+    mount -o ro -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
+    mount -o remount,rw -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
   fi
   if [ "$SUPER_PARTITION" = "false" ] && [ "$device_abpartition" = "false" ]; then
     ui_print "- Mounting /system"
     mount -o ro -t auto $ANDROID_ROOT > /dev/null 2>&1
-    mount -o rw,remount -t auto $ANDROID_ROOT > /dev/null 2>&1
-    if ! is_mounted $ANDROID_ROOT; then
-      if [ -e "/dev/block/by-name/system" ]; then
-        BLOCK="/dev/block/by-name/system"
-      elif [ -e "/dev/block/bootdevice/by-name/system" ]; then
-        BLOCK="/dev/block/bootdevice/by-name/system"
-      elif [ -e "/dev/block/platform/*/by-name/system" ]; then
-        BLOCK="/dev/block/platform/*/by-name/system"
-      else
-        BLOCK="/dev/block/platform/*/*/by-name/system"
-      fi
-      # Do not proceed without system block
-      [ -z "$BLOCK" ] && on_abort "! Cannot find system block"
-      # Mount using block device
-      mount $BLOCK $ANDROID_ROOT > /dev/null 2>&1
-    fi
-    is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
-    if [ "$(grep -w -o '/product' $fstab)" ]; then
-      ui_print "- Mounting /product"
-      mount -o ro -t auto /product > /dev/null 2>&1
-      mount -o rw,remount -t auto /product > /dev/null 2>&1
-    fi
+    mount -o remount,rw -t auto $ANDROID_ROOT > /dev/null 2>&1
+    ui_print "- Mounting /product"
+    mount -o ro -t auto /product > /dev/null 2>&1
+    mount -o remount,rw -t auto /product > /dev/null 2>&1
   fi
   if [ "$SUPER_PARTITION" = "false" ] && [ "$device_abpartition" = "true" ]; then
     ui_print "- Mounting /system"
     mount -o ro -t auto /dev/block/bootdevice/by-name/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    mount -o rw,remount -t auto /dev/block/bootdevice/by-name/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
-    if [ "$(grep -w -o '/product' $fstab)" ]; then
-      ui_print "- Mounting /product"
-      mount -o ro -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
-      mount -o rw,remount -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
-    fi
+    mount -o remount,rw -t auto /dev/block/bootdevice/by-name/system$slot $ANDROID_ROOT > /dev/null 2>&1
+    ui_print "- Mounting /product"
+    mount -o ro -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
+    mount -o remount,rw -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
   fi
+  if ! is_mounted $ANDROID_ROOT; then
+    mount -o ro $ANDROID_ROOT > /dev/null 2>&1
+    mount -o remount,rw $ANDROID_ROOT > /dev/null 2>&1
+  fi
+  if ! is_mounted /product; then
+    mount -o ro /product > /dev/null 2>&1
+    mount -o remount,rw /product > /dev/null 2>&1
+  fi
+  if ! is_mounted /system_ext; then
+    mount -o ro /system_ext > /dev/null 2>&1
+    mount -o remount,rw /system_ext > /dev/null 2>&1
+  fi
+  is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
   # Mount bind operation
   case $ANDROID_ROOT in
     /system_root) setup_mountpoint /system;;
@@ -406,13 +365,6 @@ mount_all() {
 unmount_all() {
   if [ "$BOOTMODE" = "false" ]; then
     ui_print "- Unmounting partitions"
-    umount_apex
-    if [ "$(grep -w -o '/system_root' $fstab)" ]; then
-      umount -l /system_root > /dev/null 2>&1
-    fi
-    if [ "$(grep -w -o '/system' $fstab)" ]; then
-      umount -l /system > /dev/null 2>&1
-    fi
     umount -l /system_root > /dev/null 2>&1
     umount -l /system > /dev/null 2>&1
     umount -l /product > /dev/null 2>&1
@@ -428,6 +380,7 @@ d_cleanup() { (find .$TMP -mindepth 1 -maxdepth 1 -type d -exec rm -rf '{}' \;);
 on_abort() {
   ui_print "$*"
   $BOOTMODE && exit 1
+  umount_apex
   unmount_all
   recovery_cleanup
   f_cleanup
@@ -440,6 +393,7 @@ on_abort() {
 }
 
 on_installed() {
+  umount_apex
   unmount_all
   recovery_cleanup
   f_cleanup
