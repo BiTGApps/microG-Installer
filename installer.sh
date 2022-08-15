@@ -253,15 +253,6 @@ mount_all() {
   if "$BOOTMODE"; then
     return 255
   fi
-  mount -o bind /dev/urandom /dev/random
-  [ "$ANDROID_ROOT" ] || ANDROID_ROOT="/system"
-  setup_mountpoint $ANDROID_ROOT
-  if ! is_mounted /data; then
-    mount /data
-    if [ -z "$(ls -A /sdcard)" ]; then
-      mount -o bind /data/media/0 /sdcard
-    fi
-  fi
   $SYSTEM_ROOT && ui_print "- Device is system-as-root"
   $SUPER_PARTITION && ui_print "- Super partition detected"
   # Check A/B slot
@@ -269,78 +260,52 @@ mount_all() {
   [ "$slot" ] || slot=`grep_cmdline androidboot.slot_suffix`
   [ "$slot" ] || slot=`grep_cmdline androidboot.slot`
   [ "$slot" ] && ui_print "- Current boot slot: $slot"
-  if [ "$SUPER_PARTITION" = "true" ] && [ "$device_abpartition" = "true" ]; then
-    unset ANDROID_ROOT && ANDROID_ROOT="/system_root" && setup_mountpoint $ANDROID_ROOT
-    for block in system product system_ext; do
-      for slot in "" _a _b; do
-        blockdev --setrw /dev/block/mapper/$block$slot > /dev/null 2>&1
-      done
-    done
-    ui_print "- Mounting /system"
-    mount -o ro -t auto /dev/block/mapper/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    ui_print "- Mounting /product"
-    mount -o ro -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
-    ui_print "- Mounting /system_ext"
-    mount -o ro -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/product$slot /system_ext > /dev/null 2>&1
+  mount -o bind /dev/urandom /dev/random
+  if ! is_mounted /cache; then
+    mount /cache > /dev/null 2>&1
   fi
-  if [ "$SUPER_PARTITION" = "true" ] && [ "$device_abpartition" = "false" ]; then
-    unset ANDROID_ROOT && ANDROID_ROOT="/system_root" && setup_mountpoint $ANDROID_ROOT
-    for block in system product system_ext; do
-      blockdev --setrw /dev/block/mapper/$block > /dev/null 2>&1
-    done
-    ui_print "- Mounting /system"
-    mount -o ro -t auto /dev/block/mapper/system $ANDROID_ROOT > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/system $ANDROID_ROOT > /dev/null 2>&1
-    ui_print "- Mounting /product"
-    mount -o ro -t auto /dev/block/mapper/product /product > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/product /product > /dev/null 2>&1
-    ui_print "- Mounting /system_ext"
-    mount -o ro -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/mapper/system_ext /system_ext > /dev/null 2>&1
+  if ! is_mounted /data; then
+    mount /data > /dev/null 2>&1
+    if [ -z "$(ls -A /sdcard)" ]; then
+      mount -o bind /data/media/0 /sdcard
+    fi
   fi
-  if [ "$SUPER_PARTITION" = "false" ] && [ "$device_abpartition" = "false" ]; then
-    ui_print "- Mounting /system"
-    mount -o ro -t auto $ANDROID_ROOT > /dev/null 2>&1
-    mount -o remount,rw -t auto $ANDROID_ROOT > /dev/null 2>&1
-    ui_print "- Mounting /product"
-    mount -o ro -t auto /product > /dev/null 2>&1
-    mount -o remount,rw -t auto /product > /dev/null 2>&1
-  fi
-  if [ "$SUPER_PARTITION" = "false" ] && [ "$device_abpartition" = "true" ]; then
-    ui_print "- Mounting /system"
-    mount -o ro -t auto /dev/block/bootdevice/by-name/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/bootdevice/by-name/system$slot $ANDROID_ROOT > /dev/null 2>&1
-    ui_print "- Mounting /product"
-    mount -o ro -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
-    mount -o remount,rw -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
-  fi
+  mount -o ro -t auto /product > /dev/null 2>&1
+  mount -o ro -t auto /system_ext > /dev/null 2>&1
+  [ "$ANDROID_ROOT" ] || ANDROID_ROOT="/system"
+  setup_mountpoint $ANDROID_ROOT
   if ! is_mounted $ANDROID_ROOT; then
-    mount -o ro $ANDROID_ROOT > /dev/null 2>&1
-    mount -o remount,rw $ANDROID_ROOT > /dev/null 2>&1
+    mount -o ro -t auto $ANDROID_ROOT > /dev/null 2>&1
   fi
-  if ! is_mounted /product; then
-    mount -o ro /product > /dev/null 2>&1
-    mount -o remount,rw /product > /dev/null 2>&1
-  fi
-  if ! is_mounted /system_ext; then
-    mount -o ro /system_ext > /dev/null 2>&1
-    mount -o remount,rw /system_ext > /dev/null 2>&1
-  fi
-  is_mounted $ANDROID_ROOT || on_abort "! Cannot mount $ANDROID_ROOT"
   # Mount bind operation
   case $ANDROID_ROOT in
     /system_root) setup_mountpoint /system;;
     /system)
-      if [ -f "/system/system/build.prop" ]; then
+      if ! is_mounted /system && ! is_mounted /system_root; then
+        setup_mountpoint /system_root
+        mount -o ro -t auto /system_root
+      elif [ -f "/system/system/build.prop" ]; then
         setup_mountpoint /system_root
         mount --move /system /system_root
         mount -o bind /system_root/system /system
       fi
     ;;
   esac
+  case $ANDROID_ROOT in
+    /system)
+      if ! is_mounted $ANDROID_ROOT && [ -e /dev/block/mapper/system$slot ]; then
+        mount -o ro -t auto /dev/block/mapper/system$slot /system_root > /dev/null 2>&1
+        mount -o ro -t auto /dev/block/mapper/product$slot /product > /dev/null 2>&1
+        mount -o ro -t auto /dev/block/mapper/system_ext$slot /system_ext > /dev/null 2>&1
+      fi
+      if ! is_mounted $ANDROID_ROOT && [ -e /dev/block/bootdevice/by-name/system$slot ]; then
+        mount -o ro -t auto /dev/block/bootdevice/by-name/system$slot /system_root > /dev/null 2>&1
+        mount -o ro -t auto /dev/block/bootdevice/by-name/product$slot /product > /dev/null 2>&1
+        mount -o ro -t auto /dev/block/bootdevice/by-name/system_ext$slot /system_ext > /dev/null 2>&1
+      fi
+    ;;
+  esac
+  # Mount bind operation
   if is_mounted /system_root; then
     if [ -f "/system_root/build.prop" ]; then
       mount -o bind /system_root /system
@@ -348,6 +313,25 @@ mount_all() {
       mount -o bind /system_root/system /system
     fi
   fi
+  for block in system product system_ext; do
+    for slot in "" _a _b; do
+      blockdev --setrw /dev/block/mapper/$block$slot > /dev/null 2>&1
+    done
+  done
+  mount -o rw,remount -t auto / > /dev/null 2>&1
+  ui_print "- Mounting /system"
+  if [ "$(grep -w -o '/system' /proc/mounts)" ]; then
+    mount -o remount,rw -t auto /system > /dev/null 2>&1
+    is_mounted /system || on_abort "! Cannot mount /system"
+  fi
+  if [ "$(grep -w -o '/system_root' /proc/mounts)" ]; then
+    mount -o remount,rw -t auto /system_root > /dev/null 2>&1
+    is_mounted /system_root || on_abort "! Cannot mount /system_root"
+  fi
+  ui_print "- Mounting /product"
+  mount -o rw,remount -t auto /product > /dev/null 2>&1
+  ui_print "- Mounting /system_ext"
+  mount -o rw,remount -t auto /system_ext > /dev/null 2>&1
   # Set installation layout
   SYSTEM="/system"
   # Backup installation layout
@@ -365,8 +349,8 @@ mount_all() {
 unmount_all() {
   if [ "$BOOTMODE" = "false" ]; then
     ui_print "- Unmounting partitions"
-    umount -l /system_root > /dev/null 2>&1
     umount -l /system > /dev/null 2>&1
+    umount -l /system_root > /dev/null 2>&1
     umount -l /product > /dev/null 2>&1
     umount -l /system_ext > /dev/null 2>&1
     umount -l /dev/random > /dev/null 2>&1
@@ -998,9 +982,9 @@ pre_install() {
 
 df_partition() {
   # Get the available space left on the device
-  size=`df -k $ANDROID_ROOT | tail -n 1 | tr -s ' ' | cut -d' ' -f4`
+  size=`df -k /system | tail -n 1 | tr -s ' ' | cut -d' ' -f4`
   # Disk space in human readable format (k=1024)
-  ds_hr=`df -h $ANDROID_ROOT | tail -n 1 | tr -s ' ' | cut -d' ' -f4`
+  ds_hr=`df -h /system | tail -n 1 | tr -s ' ' | cut -d' ' -f4`
   # Common target
   CAPACITY="$CAPACITY"
   # Print partition type
