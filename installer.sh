@@ -242,8 +242,8 @@ umount_apex() {
 
 umount_all() {
   if [ "$BOOTMODE" = "false" ]; then
-    umount -l /system_root > /dev/null 2>&1
     umount -l /system > /dev/null 2>&1
+    umount -l /system_root > /dev/null 2>&1
     umount -l /product > /dev/null 2>&1
     umount -l /system_ext > /dev/null 2>&1
   fi
@@ -318,7 +318,7 @@ mount_all() {
       blockdev --setrw /dev/block/mapper/$block$slot > /dev/null 2>&1
     done
   done
-  mount -o rw,remount -t auto / > /dev/null 2>&1
+  mount -o remount,rw -t auto / > /dev/null 2>&1
   ui_print "- Mounting /system"
   if [ "$(grep -w -o '/system' /proc/mounts)" ]; then
     mount -o remount,rw -t auto /system > /dev/null 2>&1
@@ -329,9 +329,9 @@ mount_all() {
     is_mounted /system_root || on_abort "! Cannot mount /system_root"
   fi
   ui_print "- Mounting /product"
-  mount -o rw,remount -t auto /product > /dev/null 2>&1
+  mount -o remount,rw -t auto /product > /dev/null 2>&1
   ui_print "- Mounting /system_ext"
-  mount -o rw,remount -t auto /system_ext > /dev/null 2>&1
+  mount -o remount,rw -t auto /system_ext > /dev/null 2>&1
   # Set installation layout
   SYSTEM="/system"
   # Backup installation layout
