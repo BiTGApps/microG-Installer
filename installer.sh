@@ -403,7 +403,7 @@ sideload_config() {
 }
 
 get_bitgapps_config() {
-  for d in /sdcard /sdcard1 /external_sd /usb_otg /usbstorage /data/media/0 /tmp; do
+  for d in /sdcard /sdcard1 /external_sd /usb_otg /usbstorage /data/media/0 /tmp /dev/tmp; do
     for f in $(find $d -iname "bitgapps-config.prop" 2>/dev/null); do
       if [ -f "$f" ]; then
         BITGAPPS_CONFIG="$f"
