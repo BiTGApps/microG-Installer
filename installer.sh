@@ -859,23 +859,62 @@ require_new_magisk() {
 }
 
 is_magic_mount() {
-  # Do not proceed without config
-  test -f "$CONFIG" || return 255
-  [ "$IS_SL" ] && IS_SL="true"
-  # Handle essential components
-  if [ "$supported_module_config" = "false" ]; then
-    $IS_SL && on_abort "! Cannot Handle Magic Mount"
-  fi
-}
-
-set_bitgapps_module() {
   # Set config defaults
   CONFIG="/data/adb/modules/MicroG/config"
   IS_SL="$(grep -w -o -s 'SYSTEMLESS' $CONFIG)"
+  # Do not proceed without config
+  test -f "$CONFIG" || return 255
+  [ "$IS_SL" ] && IS_SL="true"
+  [ -n "$IS_SL" ] || return 255
+  # Handle essential components
+  $supported_module_config && return 255
+  $IS_SL && on_abort "! Cannot Handle Magic Mount"
+}
+
+is_bitgapps_module() {
+  # Set config defaults
+  CONFIG="/data/adb/modules/BiTGApps/config"
+  IS_BITGAPPS="$(grep -w -o -s 'BITGAPPS' $CONFIG)"
+  # Do not proceed without config
+  test -f "$CONFIG" || return 255
+  [ "$IS_BITGAPPS" ] && IS_BITGAPPS="true"
+  [ -n "$IS_BITGAPPS" ] || return 255
+  # Override systemless installation
+  rm -rf /data/adb/modules/BiTGApps
+  # Override system based installation
+  for i in FaceLock* GoogleC*; do
+    rm -rf $SYSTEM_APP/$i 2>/dev/null
+  done
+  for i in Config* *Gms* GoogleL* GoogleS* Phonesky; do
+    rm -rf $SYSTEM_PRIV_APP/$i 2>/dev/null
+  done
+  rm -rf $SYSTEM_ETC_CONFIG/google*.xml
+  rm -rf $SYSTEM_ETC_DEFAULT/default-permissions.xml
+  rm -rf $SYSTEM_ETC_DEFAULT/gapps-permissions.xml
+  rm -rf $SYSTEM_ETC_PERM/*google.xml
+  rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
+  # Remove application data
+  rm -rf /data/app/com.android.vending*
+  rm -rf /data/app/com.google.android*
+  rm -rf /data/app/*/com.android.vending*
+  rm -rf /data/app/*/com.google.android*
+  rm -rf /data/data/com.android.vending*
+  rm -rf /data/data/com.google.android*
+  # Purge runtime permissions
+  rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
+  # Handle Magisk Magic Mount
+  GMS="$SYSTEM_AS_SYSTEM/priv-app/PrebuiltGmsCore"
+  mount -o remount,rw,errors=continue $GMS 2>/dev/null
+  umount -l $GMS 2>/dev/null; rm -rf $GMS 2>/dev/null
+}
+
+set_bitgapps_module() {
   # Required for System installation
   $IS_MAGISK_MODULES || return 255
   # Cannot Handle Magic Mount
   is_magic_mount
+  # Override previous module
+  is_bitgapps_module
   # Always override previous installation
   rm -rf /data/adb/modules/MicroG
   mkdir /data/adb/modules/MicroG
@@ -889,6 +928,7 @@ set_module_layout() {
     rm -rf $SYSTEM/module.prop
     # Dump config information
     echo "SYSTEMLESS" >> $SYSTEM/config
+    echo "MICROG" >> $SYSTEM/config
   fi
   if [ "$supported_module_config" = "false" ]; then
     MODULE="/data/adb/modules/MicroG"
@@ -898,6 +938,7 @@ set_module_layout() {
     $IS_MAGISK_MODULES || return 255
     # Dump config information
     echo "SYSTEM" >> $MODULE/config
+    echo "MICROG" >> $MODULE/config
   fi
 }
 
