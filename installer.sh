@@ -9,6 +9,20 @@ MODULE_JSN='BiTGApps/BiTGApps-Module/master/all/module.json'
 # Required for System installation
 IS_MAGISK_MODULES="false" && [ -d "/data/adb/modules" ] && IS_MAGISK_MODULES="true"
 
+# Remove Magisk Scripts
+rm -rf /data/adb/post-fs-data.d/service.sh
+rm -rf /data/adb/service.d/modprobe.sh
+rm -rf /data/adb/service.d/runtime.sh
+
+# Installation base is Bootmode script
+if [[ "$(getprop "sys.bootmode")" = "1" ]]; then
+  # System is writable
+  if ! touch $SYSTEM/.rw >/dev/null 2>&1; then
+    echo "! Read-only file system"
+    exit 1
+  fi
+fi
+
 # Allow mounting, when installation base is Magisk
 if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
   # Mount partitions
@@ -99,8 +113,9 @@ build_defaults() {
   ZIP_FILE="$TMP/zip"
   # Extracted Packages
   mkdir $TMP/unzip
-  # Create links
+  # Initial link
   UNZIP_DIR="$TMP/unzip"
+  # Create links
   TMP_SYS="$UNZIP_DIR/tmp_sys"
   TMP_PRIV="$UNZIP_DIR/tmp_priv"
   TMP_PRIV_SETUP="$UNZIP_DIR/tmp_priv_setup"
@@ -167,7 +182,7 @@ mount_apex() {
   if "$BOOTMODE"; then
     return 255
   fi
-  test -d "$SYSTEM/apex" || return 1
+  test -d "$SYSTEM/apex" || return 255
   ui_print "- Mounting /apex"
   local apex dest loop minorx num
   setup_mountpoint /apex
@@ -485,6 +500,24 @@ mk_component() {
   done
 }
 
+mk_module_layout() {
+  for d in \
+    $SYSTEM_SYSTEM \
+    $SYSTEM_APP \
+    $SYSTEM_PRIV_APP \
+    $SYSTEM_ETC \
+    $SYSTEM_ETC_CONFIG \
+    $SYSTEM_ETC_DEFAULT \
+    $SYSTEM_ETC_PERM \
+    $SYSTEM_ETC_PREF \
+    $SYSTEM_FRAMEWORK \
+    $SYSTEM_OVERLAY; do
+    install -d "$d"
+    chmod -R 0755 "$d"
+    chcon -h u:object_r:system_file:s0 "$d"
+  done
+}
+
 system_layout() {
   if [ "$supported_module_config" = "false" ]; then
     SYSTEM_ADDOND="$SYSTEM/addon.d"
@@ -501,30 +534,38 @@ system_layout() {
 
 system_module_layout() {
   if [ "$supported_module_config" = "true" ]; then
-    D1="$SYSTEM/system"
-    D2="$SYSTEM/system/app"
-    D3="$SYSTEM/system/priv-app"
-    D4="$SYSTEM/system/etc"
-    D5="$SYSTEM/system/etc/sysconfig"
-    D6="$SYSTEM/system/etc/default-permissions"
-    D7="$SYSTEM/system/etc/permissions"
-    D8="$SYSTEM/system/etc/preferred-apps"
-    D9="$SYSTEM/system/framework"
-    for d in $D1 $D2 $D3 $D4 $D5 $D6 $D7 $D8 $D9; do
-      install -d "$d" && chmod 0755 "$d"
-      chcon -h u:object_r:system_file:s0 "$d"
-    done
+    SYSTEM_SYSTEM="$SYSTEM/system"
+    SYSTEM_APP="$SYSTEM/system/app"
+    SYSTEM_PRIV_APP="$SYSTEM/system/priv-app"
+    SYSTEM_ETC="$SYSTEM/system/etc"
+    SYSTEM_ETC_CONFIG="$SYSTEM/system/etc/sysconfig"
+    SYSTEM_ETC_DEFAULT="$SYSTEM/system/etc/default-permissions"
+    SYSTEM_ETC_PERM="$SYSTEM/system/etc/permissions"
+    SYSTEM_ETC_PREF="$SYSTEM/system/etc/preferred-apps"
+    SYSTEM_FRAMEWORK="$SYSTEM/system/framework"
+    # Create System Module Layout
+    mk_module_layout
   fi
 }
 
 product_module_layout() {
   if [ "$supported_module_config" = "true" ]; then
-    SYSTEM_PRODUCT="$SYSTEM/system/product"
+    SYSTEM_SYSTEM="$SYSTEM/system/product"
+    SYSTEM_APP="$SYSTEM/system/product/app"
+    SYSTEM_PRIV_APP="$SYSTEM/system/product/priv-app"
     SYSTEM_OVERLAY="$SYSTEM/system/product/overlay"
-    for d in $SYSTEM_PRODUCT $SYSTEM_OVERLAY; do
-      install -d "$d" && chmod 0755 "$d"
-      chcon -h u:object_r:system_file:s0 "$d"
-    done
+    # Create Product Module Layout
+    mk_module_layout
+  fi
+}
+
+system_ext_module_layout() {
+  if [ "$supported_module_config" == "true" ]; then
+    SYSTEM_SYSTEM="$SYSTEM/system/system_ext"
+    SYSTEM_APP="$SYSTEM/system/system_ext/app"
+    SYSTEM_PRIV_APP="$SYSTEM/system/system_ext/priv-app"
+    # Create SystemExt Module Layout
+    mk_module_layout
   fi
 }
 
@@ -817,13 +858,24 @@ require_new_magisk() {
   fi
 }
 
+is_magic_mount() {
+  # Do not proceed without config
+  test -f "$CONFIG" || return 255
+  [ "$IS_SL" ] && IS_SL="true"
+  # Handle essential components
+  if [ "$supported_module_config" = "false" ]; then
+    $IS_SL && on_abort "! Cannot Handle Magic Mount"
+  fi
+}
+
 set_bitgapps_module() {
-  case $supported_module_config in
-    "false" )
-      # Required for System installation
-      $IS_MAGISK_MODULES || return 255
-      ;;
-  esac
+  # Set config defaults
+  CONFIG="/data/adb/modules/MicroG/config"
+  IS_SL="$(grep -w -o -s 'SYSTEMLESS' $CONFIG)"
+  # Required for System installation
+  $IS_MAGISK_MODULES || return 255
+  # Cannot Handle Magic Mount
+  is_magic_mount
   # Always override previous installation
   rm -rf /data/adb/modules/MicroG
   mkdir /data/adb/modules/MicroG
@@ -835,11 +887,17 @@ set_module_layout() {
     SYSTEM="/data/adb/modules/MicroG"
     # Override update information
     rm -rf $SYSTEM/module.prop
+    # Dump config information
+    echo "SYSTEMLESS" >> $SYSTEM/config
   fi
   if [ "$supported_module_config" = "false" ]; then
     MODULE="/data/adb/modules/MicroG"
     # Override update information
     rm -rf $MODULE/module.prop
+    # Required for System installation
+    $IS_MAGISK_MODULES || return 255
+    # Dump config information
+    echo "SYSTEM" >> $MODULE/config
   fi
 }
 
@@ -1015,6 +1073,7 @@ post_install() {
   set_module_layout
   system_module_layout
   product_module_layout
+  system_ext_module_layout
   common_module_layout
   pre_installed_v25
   sdk_v25_install
