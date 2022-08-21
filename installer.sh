@@ -223,6 +223,9 @@ mount_apex() {
 }
 
 umount_apex() {
+  if "$BOOTMODE"; then
+    return 255
+  fi
   test -d /apex || return 255
   local dest loop
   for dest in $(find /apex -type d -mindepth 1 -maxdepth 1); do
