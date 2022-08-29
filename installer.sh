@@ -903,9 +903,10 @@ is_bitgapps_module() {
   # Purge runtime permissions
   rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
   # Handle Magisk Magic Mount
-  GMS="$SYSTEM_AS_SYSTEM/priv-app/PrebuiltGmsCore"
-  mount -o remount,rw,errors=continue $GMS 2>/dev/null
-  umount -l $GMS 2>/dev/null; rm -rf $GMS 2>/dev/null
+  list_files | while read LIST; do
+    umount -l '/'$LIST 2>/dev/null
+    rm -rf '/'$LIST 2>/dev/null
+  done
 }
 
 set_bitgapps_module() {
