@@ -879,6 +879,12 @@ is_bitgapps_module() {
   test -f "$CONFIG" || return 255
   [ "$IS_BITGAPPS" ] && IS_BITGAPPS="true"
   [ -n "$IS_BITGAPPS" ] || return 255
+  # Do not proceed with SetupWizard installed
+  IS_WIZARD="$(grep -w -o -s 'WIZARD' $CONFIG)"
+  [ "$IS_WIZARD" ] && IS_WIZARD="true"
+  if [ -n "$IS_WIZARD" ]; then
+    on_abort "! SetupWizard Installed"
+  fi
   # Override systemless installation
   rm -rf /data/adb/modules/BiTGApps
   # Override system based installation
