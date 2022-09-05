@@ -899,6 +899,8 @@ is_bitgapps_module() {
   rm -rf $SYSTEM_ETC_DEFAULT/gapps-permissions.xml
   rm -rf $SYSTEM_ETC_PERM/*google.xml
   rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
+  # Purge OTA survival script
+  rm -rf $SYSTEM_ADDOND/70-bitgapps.sh
   # Remove application data
   rm -rf /data/app/com.android.vending*
   rm -rf /data/app/com.google.android*
