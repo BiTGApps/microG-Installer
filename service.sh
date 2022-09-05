@@ -21,3 +21,6 @@ for i in MicroGGMSCore; do
     cp -fR $MODULE/system/priv-app/$i /system/priv-app/$i
   fi
 done
+
+# Workaround for GmsCore
+rm -rf /system/priv-app/PrebuiltGmsCore
