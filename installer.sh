@@ -7,7 +7,13 @@ MODULE_URL='https://raw.githubusercontent.com'
 MODULE_JSN='BiTGApps/BiTGApps-Module/master/all/module.json'
 
 # Required for System installation
-IS_MAGISK_MODULES="false" && [ -d "/data/adb/modules" ] && IS_MAGISK_MODULES="true"
+IS_MAGISK_MODULES="false"
+if [ -d "/data/adb/modules" ]; then
+  IS_MAGISK_MODULES="true"
+fi
+
+# Magisk Current Base Folder
+MIRROR="$(magisk --path)/.magisk/mirror"
 
 # Remove Magisk Scripts
 rm -rf /data/adb/post-fs-data.d/service.sh
@@ -25,15 +31,21 @@ fi
 
 # Allow mounting, when installation base is Magisk
 if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-  # Mount partitions
+  # Mount actual partitions
   mount -o remount,rw,errors=continue / > /dev/null 2>&1
   mount -o remount,rw,errors=continue /dev/root > /dev/null 2>&1
   mount -o remount,rw,errors=continue /dev/block/dm-0 > /dev/null 2>&1
   mount -o remount,rw,errors=continue /system > /dev/null 2>&1
   mount -o remount,rw,errors=continue /product > /dev/null 2>&1
   mount -o remount,rw,errors=continue /system_ext > /dev/null 2>&1
+  # Mount mirror partitions
+  mount -o remount,rw,errors=continue $MIRROR/system_root 2>/dev/null
+  mount -o remount,rw,errors=continue $MIRROR/system 2>/dev/null
+  mount -o remount,rw,errors=continue $MIRROR/product 2>/dev/null
+  mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
   # Set installation layout
-  SYSTEM="/system"
+  MPOINT="$(ls -d system)"
+  SYSTEM="$MIRROR/$MPOINT"
   # Backup installation layout
   SYSTEM_AS_SYSTEM="$SYSTEM"
   # System is writable
@@ -44,13 +56,11 @@ if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
 fi
 
 # Product is a dedicated partition
-case "$(getprop "sys.bootmode")" in
-  "2" )
-    if grep -q " $(readlink -f /product) " /proc/mounts; then
-      ln -sf /product /system
-    fi
-    ;;
-esac
+if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
+  if grep -q " $(readlink -f /product) " /proc/mounts; then
+    ln -sf /product /system
+  fi
+fi
 
 # Detect whether in boot mode
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE="true"
