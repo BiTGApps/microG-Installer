@@ -1,5 +1,11 @@
 # This file is part of The BiTGApps Project
 
+# Handle installation of MicroG Package
+ZIPNAME="$(basename "$ZIPFILE" ".zip" | tr '[:upper:]' '[:lower:]')"
+
+# Override "ZIPNAME", when it is manipulated by Magisk
+[ "$ZIPNAME" = "install" ] && ZIPNAME="uninstall"
+
 # GITHUB RAW URL
 MODULE_URL='https://raw.githubusercontent.com'
 
@@ -86,6 +92,16 @@ chmod +x "$TMP/util_functions.sh"
 
 # Load utility functions
 . $TMP/util_functions.sh
+
+# Extract uninstaller script
+if [ "$BOOTMODE" = "false" ]; then
+  unzip -o "$ZIPFILE" "manager.sh" -d "$TMP" 2>/dev/null
+fi
+# Allow unpack, when installation base is Magisk
+if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
+  $(unzip -o "$ZIPFILE" "manager.sh" -d "$TMP" >/dev/null 2>&1)
+fi
+chmod +x "$TMP/manager.sh"
 
 ui_print() {
   if [ "$BOOTMODE" = "true" ]; then
@@ -715,6 +731,15 @@ pkg_TMPOverlay() {
   done
 }
 
+is_uninstaller() {
+  if [ "$ZIPNAME" = "uninstall" ]; then
+    ui_print "- Uninstalling MicroG"
+    source $TMP/manager.sh
+    # End installation
+    on_installed
+  fi
+}
+
 sdk_v25_install() {
   ui_print "- Installing MicroG"
   ZIP="zip/core/DroidGuard.tar.xz
@@ -1128,6 +1153,7 @@ post_install() {
   mk_component
   system_layout
   is_encrypted_data
+  is_uninstaller
   require_new_magisk
   set_bitgapps_module
   set_module_layout
