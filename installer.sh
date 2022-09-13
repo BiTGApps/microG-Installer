@@ -3,9 +3,6 @@
 # Handle installation of MicroG Package
 ZIPNAME="$(basename "$ZIPFILE" ".zip" | tr '[:upper:]' '[:lower:]')"
 
-# Override "ZIPNAME", when it is manipulated by Magisk
-[ "$ZIPNAME" = "install" ] && ZIPNAME="uninstall"
-
 # GITHUB RAW URL
 MODULE_URL='https://raw.githubusercontent.com'
 
