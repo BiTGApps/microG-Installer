@@ -1,8 +1,8 @@
 # This file is part of The BiTGApps Project
 
 # Define Current Version
-version="v1.1"
-versionCode="11"
+version="v1.2"
+versionCode="12"
 
 # Define Installation Size
 CAPACITY="100000"
@@ -34,7 +34,7 @@ system/priv-app/GoogleServicesFramework
 system/priv-app/Phonesky
 system/priv-app/PrebuiltGmsCore
 system/etc/default-permissions/default-permissions.xml
-system/etc/default-permissions/gapps-permission.xml
+system/etc/default-permissions/setup-permissions.xml
 system/etc/permissions/com.google.android.dialer.support.xml
 system/etc/permissions/com.google.android.maps.xml
 system/etc/permissions/privapp-permissions-google.xml

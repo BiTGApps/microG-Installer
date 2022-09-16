@@ -32,11 +32,11 @@ jobs:
          run: |
            cd microG
            . scripts/envsetup.sh && rm -rf scripts
-           zip -qr9 MicroG-v1.1.zip * && cd ..
-           mkdir out && cp -f microG/MicroG-v1.1.zip out
+           zip -qr9 MicroG-v1.2.zip * && cd ..
+           mkdir out && cp -f microG/MicroG-v1.2.zip out
 
        - name: Upload Build Artifact
          uses: actions/upload-artifact@v2
          with:
            name: microG-Build
-           path: out/MicroG-v1.1.zip
+           path: out/MicroG-v1.2.zip
