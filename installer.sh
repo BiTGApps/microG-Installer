@@ -477,6 +477,10 @@ on_systemless_check() {
   supported_module_config="false"
   if [ -f "$BITGAPPS_CONFIG" ]; then
     supported_module_config="$(get_prop "ro.config.systemless")"
+    # Re-write missing configuration
+    if [ -z "$supported_module_config" ]; then
+      supported_module_config="false"
+    fi
   fi
 }
 
@@ -484,6 +488,10 @@ on_setup_check() {
   supported_setup_config="false"
   if [ -f "$BITGAPPS_CONFIG" ]; then
     supported_setup_config="$(get_prop "ro.config.setupwizard")"
+    # Re-write missing configuration
+    if [ -z "$supported_setup_config" ]; then
+      supported_setup_config="false"
+    fi
   fi
 }
 
