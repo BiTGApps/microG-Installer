@@ -3,8 +3,12 @@ name: microG Build
 on:
   workflow_dispatch:
 
+env:
+  TOKEN: ${{ secrets.TOKEN }}
+
 jobs:
   build:
+    if: github.repository_owner == 'BiTGApps'
     runs-on: ubuntu-latest
 
     steps:
@@ -15,6 +19,7 @@ jobs:
          run: |
            rm -rf microG
            mkdir microG
+           install -d out
 
        - name: Clone Build Sources
          run: |
@@ -33,7 +38,29 @@ jobs:
            cd microG
            . scripts/envsetup.sh && rm -rf scripts
            zip -qr9 MicroG-v1.2.zip * && cd ..
-           mkdir out && cp -f microG/MicroG-v1.2.zip out
+           cp -f microG/MicroG-v1.2.zip out
+
+       - name: Sign microG Package
+         run: |
+           wget https://github.com/BiTGApps/BiTGApps/raw/master/tools/zipsigner/zipsigner.jar
+           sudo java -jar zipsigner.jar out/MicroG-v1.2.zip out/MicroG-v1.2-Signed.zip
+           rm -rf out/MicroG-v1.2.zip && mv -f out/MicroG-v1.2-Signed.zip out/MicroG-v1.2.zip
+
+       - name: Github Release CLI
+         run: |
+           npm install -g github-release-cli
+
+       - name: Release Signed Package
+         env:
+           RELEASE: v1.2
+         run: |
+           github-release upload \
+           --owner "BiTGApps" \
+           --repo "microG-Installer" \
+           --token "$TOKEN" \
+           --tag "${RELEASE}" \
+           --release-name "MicroG ${RELEASE}" \
+           "out/MicroG-v1.2.zip"
 
        - name: Upload Build Artifact
          uses: actions/upload-artifact@v2
