@@ -35,6 +35,7 @@ system/priv-app/Phonesky
 system/priv-app/PrebuiltGmsCore
 system/etc/default-permissions/default-permissions.xml
 system/etc/default-permissions/setup-permissions.xml
+system/etc/default-permissions/gapps-permission.xml
 system/etc/permissions/com.google.android.dialer.support.xml
 system/etc/permissions/com.google.android.maps.xml
 system/etc/permissions/privapp-permissions-google.xml
