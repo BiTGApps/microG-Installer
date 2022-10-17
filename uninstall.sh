@@ -31,6 +31,8 @@ rm -rf /system/etc/default-permissions/default-permissions.xml
 rm -rf /system/etc/permissions/com.google.android.maps.xml
 rm -rf /system/etc/permissions/privapp-permissions-microg.xml
 rm -rf /system/etc/sysconfig/microg.xml
+rm -rf /system/etc/security/fsverity/gms_fsverity_cert.der
+rm -rf /system/etc/security/fsverity/play_store_fsi_cert.der
 rm -rf /system/framework/com.google.android.maps.jar
 rm -rf /system/product/overlay/PlayStoreOverlay.apk
 # Remove application data

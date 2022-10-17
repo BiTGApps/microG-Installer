@@ -32,6 +32,8 @@ etc/default-permissions/default-permissions.xml
 etc/permissions/com.google.android.maps.xml
 etc/permissions/privapp-permissions-microg.xml
 etc/sysconfig/microg.xml
+etc/security/fsverity/gms_fsverity_cert.der
+etc/security/fsverity/play_store_fsi_cert.der
 framework/com.google.android.maps.jar
 product/overlay/PlayStoreOverlay.apk
 EOF

@@ -52,3 +52,5 @@ system/framework/com.google.android.maps.jar
 system/product/overlay/PlayStoreOverlay.apk
 EOF
 }
+
+ch_con() { chcon -h u:object_r:${1}_file:s0 "$2"; }

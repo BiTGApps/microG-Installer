@@ -26,6 +26,7 @@ cp -f sources/microG-sources/priv-app/Phonesky.tar.xz zip/core
 cp -f sources/microG-sources/framework/MapsFramework.tar.xz zip/framework
 cp -f sources/microG-sources/framework/MapsPermissions.tar.xz zip/framework
 cp -f sources/microG-sources/overlay/PlayStoreOverlay.tar.xz zip/overlay
+cp -f sources/microG-sources/etc/Certificate.tar.xz zip
 cp -f sources/microG-sources/etc/Default.tar.xz zip
 cp -f sources/microG-sources/etc/Permissions.tar.xz zip
 cp -f sources/microG-sources/etc/Sysconfig.tar.xz zip

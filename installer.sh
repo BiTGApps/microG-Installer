@@ -844,6 +844,24 @@ backup_script() {
   fi
 }
 
+fsverity_cert() {
+  FSVERITY="$SYSTEM/etc/security/fsverity"
+  test -d "$FSVERITY" || return 255
+  if [ "$BOOTMODE" = "false" ]; then
+    unzip -o "$ZIPFILE" "zip/Certificate.tar.xz" -d "$TMP"
+  fi
+  # Allow unpack, when installation base is Magisk
+  if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
+    $(unzip -oq "$ZIPFILE" "zip/Certificate.tar.xz" -d "$TMP")
+  fi
+  # Integrity Signing Certificate
+  tar -xf $TMP/Certificate.tar.xz -C "$FSVERITY"
+  chmod 0644 $FSVERITY/gms_fsverity_cert.der
+  chmod 0644 $FSVERITY/play_store_fsi_cert.der
+  chcon system "$FSVERITY/gms_fsverity_cert.der"
+  chcon system "$FSVERITY/play_store_fsi_cert.der"
+}
+
 get_flags() {
   DATA="false"
   DATA_DE="false"
@@ -1171,6 +1189,7 @@ post_install() {
   common_module_layout
   pre_installed_v25
   sdk_v25_install
+  fsverity_cert
   backup_script
   fix_gms_hide
   fix_module_perm
