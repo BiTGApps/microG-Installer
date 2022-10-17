@@ -330,6 +330,9 @@ mount_all() {
         mount --move /system /system_root
         mount -o bind /system_root/system /system
       fi
+      if [ $? != 0 ]; then
+        umount -l /system > /dev/null 2>&1
+      fi
     ;;
   esac
   case $ANDROID_ROOT in
