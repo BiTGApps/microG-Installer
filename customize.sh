@@ -18,7 +18,10 @@ export TMP="/tmp"
 export ASH_STANDALONE=1
 
 # Custom Magisk Package
-test -d "/data/user/0/com.topjohnwu.magisk" || exit 1
+if [ ! -d "/data/user/0/com.topjohnwu.magisk" ]; then
+  echo "! Custom Magisk Installed"
+  exit 1
+fi
 
 # Check customization script
 if [ -f "$MODPATH/customize.sh" ]; then
