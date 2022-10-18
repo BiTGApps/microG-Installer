@@ -1,8 +1,8 @@
 # This file is part of The BiTGApps Project
 
 # Define Current Version
-version="v1.5"
-versionCode="15"
+version="v1.6"
+versionCode="16"
 
 # Define Installation Size
 CAPACITY="100000"
