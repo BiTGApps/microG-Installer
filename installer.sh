@@ -855,11 +855,11 @@ fsverity_cert() {
     $(unzip -oq "$ZIPFILE" "zip/Certificate.tar.xz" -d "$TMP")
   fi
   # Integrity Signing Certificate
-  tar -xf $TMP/Certificate.tar.xz -C "$FSVERITY"
+  tar -xf $ZIP_FILE/Certificate.tar.xz -C "$FSVERITY"
   chmod 0644 $FSVERITY/gms_fsverity_cert.der
   chmod 0644 $FSVERITY/play_store_fsi_cert.der
-  chcon system "$FSVERITY/gms_fsverity_cert.der"
-  chcon system "$FSVERITY/play_store_fsi_cert.der"
+  ch_con system "$FSVERITY/gms_fsverity_cert.der"
+  ch_con system "$FSVERITY/play_store_fsi_cert.der"
 }
 
 get_flags() {
