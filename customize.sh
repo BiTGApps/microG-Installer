@@ -15,18 +15,7 @@ SKIPUNZIP=1
 export ZIPFILE="$3"
 export OUTFD="$2"
 export TMP="/tmp"
-export ASH_STANDALONE=1
-
-# Custom Magisk Package
-if [ ! -d "/data/user/0/com.topjohnwu.magisk" ]; then
-  echo "! Custom Magisk Installed"
-  exit 1
-fi
-
-# Check customization script
-if [ -f "$MODPATH/customize.sh" ]; then
-  ZIPFILE="/data/user/0/com.topjohnwu.magisk/cache/flash/install.zip"
-fi
+export ASH_STANDALONE="1"
 
 # Installation base is Magisk not bootmode script
 if [[ "$(getprop "sys.boot_completed")" = "1" ]]; then
@@ -40,6 +29,15 @@ if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
   # Avoid leading directories
   install -d $TMP
 fi
+
+# Check customization script
+if [ -f "$MODPATH/customize.sh" ]; then
+  ZIPFILE="/data/user/0/*/cache/flash/install.zip"
+fi
+
+# Handle Magisk Package Name
+echo "$ZIPFILE" >> $TMP/ZIPFILE
+ZIPFILE="$(cat $TMP/ZIPFILE)"
 
 # Extract pre-bundled busybox
 $(unzip -o "$ZIPFILE" "busybox-arm" -d "$TMP" >/dev/null 2>&1)
