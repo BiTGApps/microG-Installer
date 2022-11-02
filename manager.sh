@@ -2,8 +2,6 @@
 #
 # This file is part of The BiTGApps Project
 
-# Remove MicroG Module
-rm -rf /data/adb/modules/MicroG
 # Remove Magisk Scripts
 rm -rf /data/adb/post-fs-data.d/service.sh
 rm -rf /data/adb/service.d/modprobe.sh
@@ -25,6 +23,7 @@ mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
 # Set installation layout
 MPOINT="$(ls -d system)"
 SYSTEM="$MIRROR/$MPOINT"
+# Current Base Folder
 test -d "$MIRROR" || SYSTEM='/system'
 # Remove Google Mobile Services
 rm -rf $SYSTEM/app/AppleNLPBackend
@@ -59,3 +58,5 @@ umount -l $SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
 rm -rf $SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
 # Purge runtime permissions
 rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
+# Remove MicroG Module
+rm -rf /data/adb/modules/MicroG

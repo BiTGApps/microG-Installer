@@ -929,7 +929,9 @@ is_magic_mount() {
   [ -n "$IS_SL" ] || return 255
   # Handle essential components
   $supported_module_config && return 255
-  $IS_SL && on_abort "! Cannot Handle Magic Mount"
+  if [ "$IS_SL" = "true" ]; then
+    on_abort "! Cannot Handle Magic Mount"
+  fi
 }
 
 is_bitgapps_module() {
@@ -1164,6 +1166,9 @@ df_partition() {
 }
 
 df_checker() {
+  if [ "$ZIPNAME" = "uninstall" ]; then
+    return 255
+  fi
   if [ "$size" -gt "$CAPACITY" ]; then
     ui_print "- ${partition} Space: $ds_hr"
   else
