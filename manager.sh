@@ -53,9 +53,6 @@ rm -rf /data/app/*/com.android.vending*
 rm -rf /data/app/*/com.google.android*
 rm -rf /data/data/com.android.vending*
 rm -rf /data/data/com.google.android*
-# Handle Magisk Magic Mount
-umount -l $SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
-rm -rf $SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
 # Purge runtime permissions
 rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
 # Remove MicroG Module
