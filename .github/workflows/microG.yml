@@ -5,7 +5,7 @@ on:
 
 env:
   TOKEN: ${{ secrets.TOKEN }}
-  RELEASE: v1.6
+  RELEASE: v1.7
 
 jobs:
   build:
