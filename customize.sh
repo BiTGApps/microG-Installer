@@ -36,7 +36,11 @@ if [ -f "$MODPATH/customize.sh" ]; then
 fi
 
 # Handle Magisk Package Name
-echo "$ZIPFILE" >> $TMP/ZIPFILE
+for f in $ZIPFILE; do
+  echo "$f" >> $TMP/ZIPFILE
+done
+
+# Extend Globbing Package ID
 ZIPFILE="$(cat $TMP/ZIPFILE)"
 
 # Extract pre-bundled busybox
