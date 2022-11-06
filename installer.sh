@@ -47,8 +47,7 @@ if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
   mount -o remount,rw,errors=continue $MIRROR/product 2>/dev/null
   mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
   # Set installation layout
-  MPOINT="$(ls -d system)"
-  SYSTEM="$MIRROR/$MPOINT"
+  SYSTEM="$MIRROR/system"
   # Backup installation layout
   SYSTEM_AS_SYSTEM="$SYSTEM"
   # System is writable
@@ -411,8 +410,8 @@ on_abort() {
   umount_apex
   unmount_all
   recovery_cleanup
-  f_cleanup
-  d_cleanup
+  f_cleanup 2>/dev/null
+  d_cleanup 2>/dev/null
   ui_print "! Installation failed"
   ui_print " "
   true
@@ -424,8 +423,8 @@ on_installed() {
   umount_apex
   unmount_all
   recovery_cleanup
-  f_cleanup
-  d_cleanup
+  f_cleanup 2>/dev/null
+  d_cleanup 2>/dev/null
   ui_print "- Installation complete"
   ui_print " "
   true

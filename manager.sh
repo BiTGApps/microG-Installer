@@ -21,8 +21,7 @@ mount -o remount,rw,errors=continue $MIRROR/system 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/product 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
 # Set installation layout
-MPOINT="$(ls -d system)"
-SYSTEM="$MIRROR/$MPOINT"
+SYSTEM="$MIRROR/system"
 # Current Base Folder
 test -d "$MIRROR" || SYSTEM='/system'
 # Remove Google Mobile Services

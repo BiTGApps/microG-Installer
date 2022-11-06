@@ -21,8 +21,7 @@ mount -o remount,rw,errors=continue $MIRROR/system 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/product 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
 # Set installation layout
-MPOINT="$(ls -d system)"
-SYSTEM="$MIRROR/$MPOINT"
+SYSTEM="$MIRROR/system"
 # Remove Google Mobile Services
 rm -rf $SYSTEM/app/AppleNLPBackend
 rm -rf $SYSTEM/app/DejaVuNLPBackend
