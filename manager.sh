@@ -5,6 +5,7 @@
 # Remove Magisk Scripts
 rm -rf /data/adb/post-fs-data.d/service.sh
 rm -rf /data/adb/service.d/modprobe.sh
+rm -rf /data/adb/service.d/module.sh
 rm -rf /data/adb/service.d/runtime.sh
 # Magisk Current Base Folder
 MIRROR="$(magisk --path)/.magisk/mirror"
@@ -52,6 +53,16 @@ rm -rf /data/app/*/com.android.vending*
 rm -rf /data/app/*/com.google.android*
 rm -rf /data/data/com.android.vending*
 rm -rf /data/data/com.google.android*
+# Remove microG data
+rm -rf /data/app/*fdroid*
+rm -rf /data/app/*microg.nlp*
+rm -rf /data/app/*fitchfamily*
+rm -rf /data/app/*/*fdroid*
+rm -rf /data/app/*/*fitchfamily*
+rm -rf /data/app/*/*microg.nlp*
+rm -rf /data/data/*fdroid*
+rm -rf /data/data/*microg.nlp*
+rm -rf /data/data/*fitchfamily*
 # Purge runtime permissions
 rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
 # Remove MicroG Module

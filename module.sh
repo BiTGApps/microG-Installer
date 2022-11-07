@@ -16,17 +16,26 @@ mount -o remount,rw,errors=continue $MIRROR/system_root 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/system 2>/dev/null
 # Set installation layout
 SYSTEM="$MIRROR/system"
-# Enable GooglePlayServices APK
-for i in MicroGGMSCore; do
-  if [ -f "$SYSTEM/priv-app/$i/$i.dpk" ]; then
-    mv -f $SYSTEM/priv-app/$i/$i.dpk $SYSTEM/priv-app/$i/$i.apk
-  fi
-  # Restore after OTA upgrade
-  if [ ! -d "$SYSTEM/priv-app/$i" ]; then
-    cp -fR $MODULE/system/priv-app/$i $SYSTEM/priv-app/$i
-  fi
-done
 # Check module status
 test -f "$MODULE/disable" || exit 1
-# Purge runtime permissions
-rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
+# Remove application data
+rm -rf /data/app/com.android.vending*
+rm -rf /data/app/com.google.android*
+rm -rf /data/app/*/com.android.vending*
+rm -rf /data/app/*/com.google.android*
+rm -rf /data/data/com.android.vending*
+rm -rf /data/data/com.google.android*
+# Remove microG data
+rm -rf /data/app/*fdroid*
+rm -rf /data/app/*microg.nlp*
+rm -rf /data/app/*fitchfamily*
+rm -rf /data/app/*/*fdroid*
+rm -rf /data/app/*/*fitchfamily*
+rm -rf /data/app/*/*microg.nlp*
+rm -rf /data/data/*fdroid*
+rm -rf /data/data/*microg.nlp*
+rm -rf /data/data/*fitchfamily*
+# Disable GooglePlayServices APK
+for i in MicroGGMSCore; do
+  mv -f $SYSTEM/priv-app/$i/$i.apk $SYSTEM/priv-app/$i/$i.dpk
+done

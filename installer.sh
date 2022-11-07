@@ -21,6 +21,7 @@ MIRROR="$(magisk --path)/.magisk/mirror"
 # Remove Magisk Scripts
 rm -rf /data/adb/post-fs-data.d/service.sh
 rm -rf /data/adb/service.d/modprobe.sh
+rm -rf /data/adb/service.d/module.sh
 rm -rf /data/adb/service.d/runtime.sh
 
 # Installation base is Bootmode script
@@ -498,20 +499,9 @@ on_setup_check() {
 }
 
 RTP_cleanup() {
-  # Did this 6.0+ system already boot and generated runtime permissions
-  if [ -e /data/system/users/0/runtime-permissions.xml ]; then
-    # Check if permissions were granted to Google Playstore, this permissions should always be set in the file if GApps were installed before
-    if ! grep -q "com.android.vending" /data/system/users/*/runtime-permissions.xml; then
-      # Purge the runtime permissions to prevent issues if flashing GApps for the first time on a dirty install
-      rm -rf /data/system/users/*/runtime-permissions.xml
-    fi
-  fi
-  # Did this 11.0+ system already boot and generated runtime permissions
   RTP="$(find /data -iname "runtime-permissions.xml" 2>/dev/null)"
   if [ -e "$RTP" ]; then
-    # Check if permissions were granted to Google Playstore, this permissions should always be set in the file if GApps were installed before
     if ! grep -q "com.android.vending" $RTP; then
-      # Purge the runtime permissions to prevent issues if flashing GApps for the first time on a dirty install
       rm -rf "$RTP"
     fi
   fi
@@ -618,16 +608,17 @@ common_module_layout() {
 }
 
 pre_installed_v25() {
-  for i in AppleNLPBackend DejaVuNLPBackend FossDroid LocalGSMNLPBackend LocalWiFiNLPBackend MozillaUnifiedNLPBackend NominatimNLPBackend; do
-    rm -rf $SYSTEM_APP/$i
-  done
-  for i in DroidGuard Extension MicroGGMSCore MicroGGSFProxy Phonesky; do
-    rm -rf $SYSTEM_PRIV_APP/$i
-  done
-  for i in $SYSTEM_ETC_CONFIG/microg.xml $SYSTEM_ETC_DEFAULT/default-permissions.xml $SYSTEM_ETC_PERM/privapp-permissions-microg.xml; do
-    rm -rf $i
-  done
+  rm -rf $SYSTEM_APP/*NLP*
+  rm -rf $SYSTEM_APP/FossDroid
+  rm -rf $SYSTEM_PRIV_APP/DroidGuard
+  rm -rf $SYSTEM_PRIV_APP/Extension
+  rm -rf $SYSTEM_PRIV_APP/MicroG*
+  rm -rf $SYSTEM_PRIV_APP/Phonesky
+  rm -rf $SYSTEM_ETC_CONFIG/microg.xml
+  rm -rf $SYSTEM_ETC_DEFAULT/default-permissions.xml
+  rm -rf $SYSTEM_ETC_PERM/privapp-permissions-microg.xml
   rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
+  rm -rf $SYSTEM_ADDOND/70-microg.sh
 }
 
 pkg_TMPSys() {
@@ -960,6 +951,7 @@ is_bitgapps_module() {
   rm -rf $SYSTEM_ETC_DEFAULT/default-permissions.xml
   rm -rf $SYSTEM_ETC_DEFAULT/gapps-permissions.xml
   rm -rf $SYSTEM_ETC_PERM/*google.xml
+  rm -rf $SYSTEM_FRAMEWORK/*google*
   rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
   # Purge OTA survival script
   rm -rf $SYSTEM_ADDOND/70-bitgapps.sh
@@ -972,11 +964,6 @@ is_bitgapps_module() {
   rm -rf /data/data/com.google.android*
   # Purge runtime permissions
   rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
-  # Handle Magisk Magic Mount
-  list_files | while read LIST; do
-    umount -l '/'$LIST 2>/dev/null
-    rm -rf '/'$LIST 2>/dev/null
-  done
 }
 
 set_bitgapps_module() {
@@ -1015,10 +1002,8 @@ set_module_layout() {
 
 fix_gms_hide() {
   if [ "$supported_module_config" = "true" ]; then
-    mount -o remount,rw,errors=continue $SYSTEM_AS_SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
-    umount -l $SYSTEM_AS_SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
-    rm -rf $SYSTEM_AS_SYSTEM/priv-app/MicroGGMSCore 2>/dev/null
-    cp -fR $SYSTEM_SYSTEM/priv-app/MicroGGMSCore $SYSTEM_AS_SYSTEM/priv-app 2>/dev/null
+    rm -rf $SYSTEM_AS_SYSTEM/priv-app/MicroGGMSCore
+    cp -fR $SYSTEM_SYSTEM/priv-app/MicroGGMSCore $SYSTEM_AS_SYSTEM/priv-app
   fi
 }
 
@@ -1084,19 +1069,19 @@ permissions() {
 module_probe() {
   if [ "$supported_module_config" = "true" ] && [ -d "/data/adb/service.d" ]; then
     if [ "$BOOTMODE" = "false" ]; then
-      unzip -o "$ZIPFILE" "modprobe.sh" -d "$TMP"
+      unzip -o "$ZIPFILE" "module.sh" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-      $(unzip -o "$ZIPFILE" "modprobe.sh" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -o "$ZIPFILE" "module.sh" -d "$TMP" >/dev/null 2>&1)
     fi
     # Install module service
-    rm -rf /data/adb/service.d/modprobe.sh
-    cp -f $TMP/modprobe.sh /data/adb/service.d/modprobe.sh
-    chmod 0755 /data/adb/service.d/modprobe.sh
-    chcon -h u:object_r:adb_data_file:s0 "/data/adb/service.d/modprobe.sh"
+    rm -rf /data/adb/service.d/module.sh
+    cp -f $TMP/module.sh /data/adb/service.d/module.sh
+    chmod 0755 /data/adb/service.d/module.sh
+    chcon -h u:object_r:adb_data_file:s0 "/data/adb/service.d/module.sh"
     # Update file GROUP
-    chown -h root:shell /data/adb/service.d/modprobe.sh
+    chown -h root:shell /data/adb/service.d/module.sh
   fi
 }
 
