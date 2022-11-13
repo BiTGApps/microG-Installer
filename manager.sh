@@ -64,6 +64,6 @@ rm -rf /data/data/*fdroid*
 rm -rf /data/data/*microg.nlp*
 rm -rf /data/data/*fitchfamily*
 # Purge runtime permissions
-rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
+rm -rf $(find /data -iname "runtime-permissions.xml")
 # Remove MicroG Module
 rm -rf /data/adb/modules/MicroG

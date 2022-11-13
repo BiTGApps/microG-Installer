@@ -56,6 +56,7 @@ if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
     echo "! Read-only file system"
     exit 1
   fi
+  install -d $SYSTEM/etc/module
 fi
 
 # Product is a dedicated partition
@@ -79,11 +80,11 @@ fi
 
 # Extract utility script
 if [ "$BOOTMODE" = "false" ]; then
-  unzip -o "$ZIPFILE" "util_functions.sh" -d "$TMP" 2>/dev/null
+  unzip -oq "$ZIPFILE" "util_functions.sh" -d "$TMP"
 fi
 # Allow unpack, when installation base is Magisk
 if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-  $(unzip -o "$ZIPFILE" "util_functions.sh" -d "$TMP" >/dev/null 2>&1)
+  $(unzip -oq "$ZIPFILE" "util_functions.sh" -d "$TMP")
 fi
 chmod +x "$TMP/util_functions.sh"
 
@@ -92,11 +93,11 @@ chmod +x "$TMP/util_functions.sh"
 
 # Extract uninstaller script
 if [ "$BOOTMODE" = "false" ]; then
-  unzip -o "$ZIPFILE" "manager.sh" -d "$TMP" 2>/dev/null
+  unzip -oq "$ZIPFILE" "manager.sh" -d "$TMP"
 fi
 # Allow unpack, when installation base is Magisk
 if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-  $(unzip -o "$ZIPFILE" "manager.sh" -d "$TMP" >/dev/null 2>&1)
+  $(unzip -oq "$ZIPFILE" "manager.sh" -d "$TMP")
 fi
 chmod +x "$TMP/manager.sh"
 
@@ -218,12 +219,12 @@ mount_apex() {
     case $apex in
       *.apex|*.capex)
         # Handle CAPEX APKs
-        unzip -qo $apex original_apex -d /apex
+        unzip -oq $apex original_apex -d /apex
         if [ -f "/apex/original_apex" ]; then
           apex="/apex/original_apex"
         fi
         # Handle APEX APKs
-        unzip -qo $apex apex_payload.img -d /apex
+        unzip -oq $apex apex_payload.img -d /apex
         mv -f /apex/apex_payload.img $dest.img
         mount -t ext4 -o ro,noatime $dest.img $dest 2>/dev/null
         if [ $? != 0 ]; then
@@ -388,6 +389,7 @@ mount_all() {
   if is_mounted /product; then
     ln -sf /product /system
   fi
+  install -d $SYSTEM/etc/module
 }
 
 unmount_all() {
@@ -435,11 +437,11 @@ on_installed() {
 
 sideload_config() {
   if [ "$BOOTMODE" = "false" ]; then
-    unzip -o "$ZIPFILE" "bitgapps-config.prop" -d "$TMP" 2>/dev/null
+    unzip -oq "$ZIPFILE" "bitgapps-config.prop" -d "$TMP"
   fi
   # Allow unpack, when installation base is Magisk
   if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-    $(unzip -o "$ZIPFILE" "bitgapps-config.prop" -d "$TMP" >/dev/null 2>&1)
+    $(unzip -oq "$ZIPFILE" "bitgapps-config.prop" -d "$TMP")
   fi
 }
 
@@ -484,6 +486,8 @@ on_systemless_check() {
     if [ -z "$supported_module_config" ]; then
       supported_module_config="false"
     fi
+    # Override unsupported configuration
+    supported_module_config="false"
   fi
 }
 
@@ -499,7 +503,7 @@ on_setup_check() {
 }
 
 RTP_cleanup() {
-  RTP="$(find /data -iname "runtime-permissions.xml" 2>/dev/null)"
+  RTP="$(find /data -iname "runtime-permissions.xml")"
   if [ -e "$RTP" ]; then
     if ! grep -q "com.android.vending" $RTP; then
       rm -rf "$RTP"
@@ -523,7 +527,7 @@ mk_component() {
   done
 }
 
-mk_module_layout() {
+make_module_layout() {
   for d in \
     $SYSTEM_SYSTEM \
     $SYSTEM_APP \
@@ -566,8 +570,6 @@ system_module_layout() {
     SYSTEM_ETC_PERM="$SYSTEM/system/etc/permissions"
     SYSTEM_ETC_PREF="$SYSTEM/system/etc/preferred-apps"
     SYSTEM_FRAMEWORK="$SYSTEM/system/framework"
-    # Create System Module Layout
-    mk_module_layout
   fi
 }
 
@@ -577,8 +579,6 @@ product_module_layout() {
     SYSTEM_APP="$SYSTEM/system/product/app"
     SYSTEM_PRIV_APP="$SYSTEM/system/product/priv-app"
     SYSTEM_OVERLAY="$SYSTEM/system/product/overlay"
-    # Create Product Module Layout
-    mk_module_layout
   fi
 }
 
@@ -587,8 +587,6 @@ system_ext_module_layout() {
     SYSTEM_SYSTEM="$SYSTEM/system/system_ext"
     SYSTEM_APP="$SYSTEM/system/system_ext/app"
     SYSTEM_PRIV_APP="$SYSTEM/system/system_ext/priv-app"
-    # Create SystemExt Module Layout
-    mk_module_layout
   fi
 }
 
@@ -757,11 +755,11 @@ sdk_v25_install() {
        zip/Permissions.tar.xz
        zip/overlay/PlayStoreOverlay.tar.xz"
   if [ "$BOOTMODE" = "false" ]; then
-    for f in $ZIP; do unzip -o "$ZIPFILE" "$f" -d "$TMP"; done
+    for f in $ZIP; do unzip -oq "$ZIPFILE" "$f" -d "$TMP"; done
   fi
   # Allow unpack, when installation base is Magisk
   if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-    for f in $ZIP; do $(unzip -o "$ZIPFILE" "$f" -d "$TMP" >/dev/null 2>&1); done
+    for f in $ZIP; do $(unzip -oq "$ZIPFILE" "$f" -d "$TMP"); done
   fi
   tar -xf $ZIP_FILE/sys/AppleNLPBackend.tar.xz -C $TMP_SYS
   tar -xf $ZIP_FILE/sys/DejaVuNLPBackend.tar.xz -C $TMP_SYS
@@ -790,11 +788,11 @@ sdk_v25_install() {
 maps_config() {
   ZIP="zip/framework/MapsPermissions.tar.xz"
   if [ "$BOOTMODE" = "false" ]; then
-    for f in $ZIP; do unzip -o "$ZIPFILE" "$f" -d "$TMP"; done
+    for f in $ZIP; do unzip -oq "$ZIPFILE" "$f" -d "$TMP"; done
   fi
   # Allow unpack, when installation base is Magisk
   if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-    for f in $ZIP; do $(unzip -o "$ZIPFILE" "$f" -d "$TMP" >/dev/null 2>&1); done
+    for f in $ZIP; do $(unzip -oq "$ZIPFILE" "$f" -d "$TMP"); done
   fi
   tar -xf $ZIP_FILE/framework/MapsPermissions.tar.xz -C $TMP_PERMISSION
   pkg_TMPPerm
@@ -804,11 +802,11 @@ maps_config() {
 maps_framework() {
   ZIP="zip/framework/MapsFramework.tar.xz"
   if [ "$BOOTMODE" = "false" ]; then
-    for f in $ZIP; do unzip -o "$ZIPFILE" "$f" -d "$TMP"; done
+    for f in $ZIP; do unzip -oq "$ZIPFILE" "$f" -d "$TMP"; done
   fi
   # Allow unpack, when installation base is Magisk
   if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-    for f in $ZIP; do $(unzip -o "$ZIPFILE" "$f" -d "$TMP" >/dev/null 2>&1); done
+    for f in $ZIP; do $(unzip -oq "$ZIPFILE" "$f" -d "$TMP"); done
   fi
   tar -xf $ZIP_FILE/framework/MapsFramework.tar.xz -C $TMP_FRAMEWORK
   pkg_TMPFramework
@@ -820,11 +818,11 @@ backup_script() {
     ui_print "- Installing OTA survival script"
     ADDOND="70-microg.sh"
     if [ "$BOOTMODE" = "false" ]; then
-      unzip -o "$ZIPFILE" "$ADDOND" -d "$TMP"
+      unzip -oq "$ZIPFILE" "$ADDOND" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-      $(unzip -o "$ZIPFILE" "$ADDOND" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -oq "$ZIPFILE" "$ADDOND" -d "$TMP")
     fi
     # Install OTA survival script
     rm -rf $SYSTEM_ADDOND/$ADDOND
@@ -838,7 +836,7 @@ fsverity_cert() {
   FSVERITY="$SYSTEM/etc/security/fsverity"
   test -d "$FSVERITY" || return 255
   if [ "$BOOTMODE" = "false" ]; then
-    unzip -o "$ZIPFILE" "zip/Certificate.tar.xz" -d "$TMP"
+    unzip -oq "$ZIPFILE" "zip/Certificate.tar.xz" -d "$TMP"
   fi
   # Allow unpack, when installation base is Magisk
   if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
@@ -963,7 +961,7 @@ is_bitgapps_module() {
   rm -rf /data/data/com.android.vending*
   rm -rf /data/data/com.google.android*
   # Purge runtime permissions
-  rm -rf $(find /data -iname "runtime-permissions.xml" 2>/dev/null)
+  rm -rf $(find /data -iname "runtime-permissions.xml")
 }
 
 set_bitgapps_module() {
@@ -1034,6 +1032,7 @@ module_info() {
 }
 
 system_info() {
+  local IS_MAGISK_MODULES="true" && local MODULE="$SYSTEM/etc/module"
   if [ "$supported_module_config" = "false" ] && $IS_MAGISK_MODULES; then
     echo -e "id=MicroG-Android" >> $MODULE/module.prop
     echo -e "name=MicroG for Android" >> $MODULE/module.prop
@@ -1050,11 +1049,11 @@ system_info() {
 permissions() {
   if [ -d "/data/adb/service.d" ]; then
     if [ "$BOOTMODE" == "false" ]; then
-      unzip -o "$ZIPFILE" "runtime.sh" -d "$TMP"
+      unzip -oq "$ZIPFILE" "runtime.sh" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" == "2" ]]; then
-      $(unzip -o "$ZIPFILE" "runtime.sh" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -oq "$ZIPFILE" "runtime.sh" -d "$TMP")
     fi
     # Install runtime permissions
     rm -rf /data/adb/service.d/runtime.sh
@@ -1069,11 +1068,11 @@ permissions() {
 module_probe() {
   if [ "$supported_module_config" = "true" ] && [ -d "/data/adb/service.d" ]; then
     if [ "$BOOTMODE" = "false" ]; then
-      unzip -o "$ZIPFILE" "module.sh" -d "$TMP"
+      unzip -oq "$ZIPFILE" "module.sh" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-      $(unzip -o "$ZIPFILE" "module.sh" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -oq "$ZIPFILE" "module.sh" -d "$TMP")
     fi
     # Install module service
     rm -rf /data/adb/service.d/module.sh
@@ -1088,11 +1087,11 @@ module_probe() {
 module_service() {
   if [ "$supported_module_config" = "true" ] && [ -d "/data/adb/post-fs-data.d" ]; then
     if [ "$BOOTMODE" = "false" ]; then
-      unzip -o "$ZIPFILE" "service.sh" -d "$TMP"
+      unzip -oq "$ZIPFILE" "service.sh" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-      $(unzip -o "$ZIPFILE" "service.sh" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -oq "$ZIPFILE" "service.sh" -d "$TMP")
     fi
     # Install module service
     rm -rf /data/adb/post-fs-data.d/service.sh
@@ -1108,11 +1107,11 @@ module_cleanup() {
   local MODULEROOT="/data/adb/modules/MicroG"
   if [ -d "/data/adb/modules/MicroG" ]; then
     if [ "$BOOTMODE" = "false" ]; then
-      unzip -o "$ZIPFILE" "uninstall.sh" -d "$TMP"
+      unzip -oq "$ZIPFILE" "uninstall.sh" -d "$TMP"
     fi
     # Allow unpack, when installation base is Magisk
     if [[ "$(getprop "sys.bootmode")" = "2" ]]; then
-      $(unzip -o "$ZIPFILE" "uninstall.sh" -d "$TMP" >/dev/null 2>&1)
+      $(unzip -oq "$ZIPFILE" "uninstall.sh" -d "$TMP")
     fi
     # Module uninstall script
     rm -rf $MODULEROOT/uninstall.sh
@@ -1135,7 +1134,7 @@ pre_install() {
   get_bitgapps_config
   profile
   RTP_cleanup
-  on_systemless_check
+  ${on_systemless_check}
 }
 
 df_partition() {
@@ -1167,29 +1166,32 @@ post_install() {
   build_defaults
   mk_component
   system_layout
-  is_encrypted_data
-  is_uninstaller
-  require_new_magisk
-  set_bitgapps_module
-  set_module_layout
-  system_module_layout
-  product_module_layout
-  system_ext_module_layout
-  common_module_layout
+  ${is_encrypted_data}
+  ${is_uninstaller}
+  ${require_new_magisk}
+  ${set_bitgapps_module}
+  ${set_module_layout}
+  ${system_module_layout}
+  ${make_module_layout}
+  ${product_module_layout}
+  ${make_module_layout}
+  ${system_ext_module_layout}
+  ${make_module_layout}
+  ${common_module_layout}
   pre_installed_v25
   sdk_v25_install
   fsverity_cert
   backup_script
-  fix_gms_hide
-  fix_module_perm
+  ${fix_gms_hide}
+  ${fix_module_perm}
   maps_config
   maps_framework
-  module_info
+  ${module_info}
   system_info
   permissions
-  module_probe
-  module_service
-  module_cleanup
+  ${module_probe}
+  ${module_service}
+  ${module_cleanup}
   on_installed
 }
 

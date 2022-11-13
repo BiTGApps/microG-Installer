@@ -12,7 +12,7 @@ setenforce 0
 export ZIPFILE="$3"
 export OUTFD="$2"
 export TMP="/tmp"
-export ASH_STANDALONE="1"
+export ASH_STANDALONE=1
 
 # Installation base is Magisk not bootmode script
 if [[ "$(getprop "sys.boot_completed")" = "1" ]]; then
