@@ -1134,7 +1134,7 @@ pre_install() {
   get_bitgapps_config
   profile
   RTP_cleanup
-  ${on_systemless_check}
+  on_systemless_check
 }
 
 df_partition() {
