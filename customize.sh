@@ -15,7 +15,13 @@ SKIPUNZIP=1
 export ZIPFILE="$3"
 export OUTFD="$2"
 export TMP="/tmp"
-export ASH_STANDALONE="1"
+export ASH_STANDALONE=1
+
+# Override JSON Profile
+if [ -d "/data/adb/modules/MicroG" ]; then
+  echo "! Invalid JSON Profile"
+  exit 1
+fi
 
 # Installation base is Magisk not bootmode script
 if [[ "$(getprop "sys.boot_completed")" = "1" ]]; then
