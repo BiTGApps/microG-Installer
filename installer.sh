@@ -615,8 +615,9 @@ pre_installed_v25() {
   rm -rf $SYSTEM_ETC_CONFIG/microg.xml
   rm -rf $SYSTEM_ETC_DEFAULT/default-permissions.xml
   rm -rf $SYSTEM_ETC_PERM/privapp-permissions-microg.xml
-  rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
+  rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay.apk
   rm -rf $SYSTEM_ADDOND/70-microg.sh
+  rm -rf $SYSTEM/etc/module/module.prop
 }
 
 pkg_TMPSys() {

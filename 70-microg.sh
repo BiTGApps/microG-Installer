@@ -12,6 +12,9 @@ else
   TMP="/postinstall/tmp"
 fi
 
+# Create JSON Profile
+install -d $SYS/etc/module
+
 . /tmp/backuptool.functions
 
 list_files() {
@@ -34,6 +37,7 @@ etc/permissions/privapp-permissions-microg.xml
 etc/sysconfig/microg.xml
 etc/security/fsverity/gms_fsverity_cert.der
 etc/security/fsverity/play_store_fsi_cert.der
+etc/module/module.prop
 framework/com.google.android.maps.jar
 product/overlay/PlayStoreOverlay.apk
 EOF
