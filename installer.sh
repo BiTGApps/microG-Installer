@@ -505,7 +505,7 @@ on_setup_check() {
 RTP_cleanup() {
   RTP="$(find /data -iname "runtime-permissions.xml")"
   if [ -e "$RTP" ]; then
-    if ! grep -q "com.android.vending" $RTP; then
+    if ! grep -qwo 'com.android.vending' $RTP; then
       rm -rf "$RTP"
     fi
   fi
