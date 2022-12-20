@@ -21,10 +21,10 @@ mount -o remount,rw,errors=continue $MIRROR/system_root 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/system 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/product 2>/dev/null
 mount -o remount,rw,errors=continue $MIRROR/system_ext 2>/dev/null
-# Set installation layout
-SYSTEM="$MIRROR/system"
 # Current Base Folder
 test -d "$MIRROR" || SYSTEM='/system'
+# Set installation layout
+test -d "$MIRROR" && SYSTEM="$MIRROR/system"
 # Remove Google Mobile Services
 rm -rf $SYSTEM/app/AppleNLPBackend
 rm -rf $SYSTEM/app/DejaVuNLPBackend
@@ -53,7 +53,7 @@ rm -rf /data/app/*/com.android.vending*
 rm -rf /data/app/*/com.google.android*
 rm -rf /data/data/com.android.vending*
 rm -rf /data/data/com.google.android*
-# Remove microG data
+# Remove application data
 rm -rf /data/app/*fdroid*
 rm -rf /data/app/*microg.nlp*
 rm -rf /data/app/*fitchfamily*
@@ -64,6 +64,6 @@ rm -rf /data/data/*fdroid*
 rm -rf /data/data/*microg.nlp*
 rm -rf /data/data/*fitchfamily*
 # Purge runtime permissions
-rm -rf $(find /data -iname "runtime-permissions.xml")
+rm -rf $(find /data -type f -iname "runtime-permissions.xml")
 # Remove MicroG Module
 rm -rf /data/adb/modules/MicroG

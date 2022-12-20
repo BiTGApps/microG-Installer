@@ -7,7 +7,7 @@ ZIPNAME="$(basename "$ZIPFILE" ".zip" | tr '[:upper:]' '[:lower:]')"
 MODULE_URL='https://raw.githubusercontent.com'
 
 # Module JSON URL
-MODULE_JSN='BiTGApps/BiTGApps-Module/master/all/module.json'
+MODULE_JSN='BiTGApps/Patched-Module/master/all/module.json'
 
 # Required for System installation
 IS_MAGISK_MODULES="false"
@@ -365,11 +365,11 @@ mount_all() {
   done
   mount -o remount,rw -t auto / > /dev/null 2>&1
   ui_print "- Mounting /system"
-  if [ "$(grep -w -o '/system' /proc/mounts)" ]; then
+  if [ "$(grep -wo '/system' /proc/mounts)" ]; then
     mount -o remount,rw -t auto /system > /dev/null 2>&1
     is_mounted /system || on_abort "! Cannot mount /system"
   fi
-  if [ "$(grep -w -o '/system_root' /proc/mounts)" ]; then
+  if [ "$(grep -wo '/system_root' /proc/mounts)" ]; then
     mount -o remount,rw -t auto /system_root > /dev/null 2>&1
     is_mounted /system_root || on_abort "! Cannot mount /system_root"
   fi
@@ -503,7 +503,7 @@ on_setup_check() {
 }
 
 RTP_cleanup() {
-  RTP="$(find /data -iname "runtime-permissions.xml")"
+  RTP="$(find /data -type f -iname "runtime-permissions.xml")"
   if [ -e "$RTP" ]; then
     if ! grep -qwo 'com.android.vending' $RTP; then
       rm -rf "$RTP"
@@ -911,7 +911,7 @@ require_new_magisk() {
 is_magic_mount() {
   # Set config defaults
   CONFIG="/data/adb/modules/MicroG/config"
-  IS_SL="$(grep -w -o -s 'SYSTEMLESS' $CONFIG)"
+  IS_SL="$(grep -wos 'MODULE' $CONFIG)"
   # Do not proceed without config
   test -f "$CONFIG" || return 255
   [ "$IS_SL" ] && IS_SL="true"
@@ -919,20 +919,20 @@ is_magic_mount() {
   # Handle essential components
   $supported_module_config && return 255
   if [ "$IS_SL" = "true" ]; then
-    on_abort "! Cannot Handle Magic Mount"
+    on_abort "! Systemlessly Installed"
   fi
 }
 
 is_bitgapps_module() {
   # Set config defaults
   CONFIG="/data/adb/modules/BiTGApps/config"
-  IS_BITGAPPS="$(grep -w -o -s 'BITGAPPS' $CONFIG)"
+  IS_BITGAPPS="$(grep -wos 'BITGAPPS' $CONFIG)"
   # Do not proceed without config
   test -f "$CONFIG" || return 255
   [ "$IS_BITGAPPS" ] && IS_BITGAPPS="true"
   [ -n "$IS_BITGAPPS" ] || return 255
   # Do not proceed with SetupWizard installed
-  IS_WIZARD="$(grep -w -o -s 'WIZARD' $CONFIG)"
+  IS_WIZARD="$(grep -wos 'WIZARD' $CONFIG)"
   [ "$IS_WIZARD" ] && IS_WIZARD="true"
   if [ -n "$IS_WIZARD" ]; then
     on_abort "! SetupWizard Installed"
@@ -951,7 +951,7 @@ is_bitgapps_module() {
   rm -rf $SYSTEM_ETC_DEFAULT/gapps-permissions.xml
   rm -rf $SYSTEM_ETC_PERM/*google.xml
   rm -rf $SYSTEM_FRAMEWORK/*google*
-  rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay
+  rm -rf $SYSTEM_OVERLAY/PlayStoreOverlay.apk
   # Purge OTA survival script
   rm -rf $SYSTEM_ADDOND/70-bitgapps.sh
   # Remove application data
@@ -962,7 +962,7 @@ is_bitgapps_module() {
   rm -rf /data/data/com.android.vending*
   rm -rf /data/data/com.google.android*
   # Purge runtime permissions
-  rm -rf $(find /data -iname "runtime-permissions.xml")
+  rm -rf $(find /data -type f -iname "runtime-permissions.xml")
 }
 
 set_bitgapps_module() {
@@ -984,8 +984,8 @@ set_module_layout() {
     # Override update information
     rm -rf $SYSTEM/module.prop
     # Dump config information
-    echo "SYSTEMLESS" >> $SYSTEM/config
     echo "MICROG" >> $SYSTEM/config
+    echo "MODULE" >> $SYSTEM/config
   fi
   if [ "$supported_module_config" = "false" ]; then
     MODULE="/data/adb/modules/MicroG"
@@ -994,15 +994,17 @@ set_module_layout() {
     # Required for System installation
     $IS_MAGISK_MODULES || return 255
     # Dump config information
-    echo "SYSTEM" >> $MODULE/config
     echo "MICROG" >> $MODULE/config
+    echo "SYSTEM" >> $MODULE/config
   fi
 }
 
 fix_gms_hide() {
   if [ "$supported_module_config" = "true" ]; then
-    rm -rf $SYSTEM_AS_SYSTEM/priv-app/MicroGGMSCore
-    cp -fR $SYSTEM_SYSTEM/priv-app/MicroGGMSCore $SYSTEM_AS_SYSTEM/priv-app
+    for i in MicroGGMSCore; do
+      rm -rf $SYSTEM_AS_SYSTEM/priv-app/$i
+      cp -fR $SYSTEM_SYSTEM/priv-app/$i $SYSTEM_AS_SYSTEM/priv-app/$i
+    done
   fi
 }
 
@@ -1012,9 +1014,10 @@ fix_module_perm() {
       (chmod 0755 $i/*) 2>/dev/null
       (chmod 0644 $i/*/.replace) 2>/dev/null
     done
-    for i in $SYSTEM_ETC_DEFAULT $SYSTEM_ETC_PERM $SYSTEM_ETC_PREF $SYSTEM_ETC_CONFIG; do
-      (chmod 0644 $i/*) 2>/dev/null
-    done
+    chmod 0644 $SYSTEM_ETC_DEFAULT/* 2>/dev/null
+    chmod 0644 $SYSTEM_ETC_PERM/* 2>/dev/null
+    chmod 0644 $SYSTEM_ETC_PREF/* 2>/dev/null
+    chmod 0644 $SYSTEM_ETC_CONFIG/* 2>/dev/null
   fi
 }
 

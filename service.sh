@@ -29,4 +29,4 @@ done
 # Check module status
 test -f "$MODULE/disable" || exit 1
 # Purge runtime permissions
-rm -rf $(find /data -iname "runtime-permissions.xml")
+rm -rf $(find /data -type f -iname "runtime-permissions.xml")

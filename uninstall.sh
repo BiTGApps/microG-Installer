@@ -51,7 +51,7 @@ rm -rf /data/app/*/com.android.vending*
 rm -rf /data/app/*/com.google.android*
 rm -rf /data/data/com.android.vending*
 rm -rf /data/data/com.google.android*
-# Remove microG data
+# Remove application data
 rm -rf /data/app/*fdroid*
 rm -rf /data/app/*microg.nlp*
 rm -rf /data/app/*fitchfamily*
@@ -62,6 +62,6 @@ rm -rf /data/data/*fdroid*
 rm -rf /data/data/*microg.nlp*
 rm -rf /data/data/*fitchfamily*
 # Purge runtime permissions
-rm -rf $(find /data -iname "runtime-permissions.xml")
+rm -rf $(find /data -type f -iname "runtime-permissions.xml")
 # Remove MicroG Module
 rm -rf /data/adb/modules/MicroG
